@@ -1,6 +1,9 @@
 name: Start Program
 
 on:
+  push:
+    branches:
+      - fix/non-interactive
   workflow_dispatch:
     inputs:
       input_string:
@@ -9,32 +12,37 @@ on:
         type: string
 
 jobs:
-  run-npm-start:
+  access-private-repo:
     runs-on: ubuntu-latest
     steps:
-
-      - name: Test Git Authentication
+      - name: Access Private Repository TEST
         env:
           AUTH_TOKEN: ${{ secrets.UBIQUITY_OS_CONFIGURATION_PAT }}
         run: |
           git config --global url."https://${{ secrets.UBIQUITY_OS_CONFIGURATION_PAT }}:@github.com/".insteadOf "https://github.com/"
           git ls-remote https://github.com/ubiquity-os-marketplace/ubiquibot-config.git HEAD
+        continue-on-error: true
+        id: test_access
 
       - name: Checkout code
+        if: steps.test_access.outcome == 'success'
         uses: actions/checkout@v4
 
       - name: Setup Node.js
+        if: steps.test_access.outcome == 'success'
         uses: actions/setup-node@v4
         with:
           node-version: "20.10.0"
 
       - name: Install dependencies
+        if: steps.test_access.outcome == 'success'
         run: npm install
 
       - name: Run npm start
-        run: npm start "${{ github.event.inputs.input_string }}"
+        if: steps.test_access.outcome == 'success'
+        run: npm start "${{ github.event_name == 'push' && 'change the max concurrent tasks for any role to be 1 max instead of 2' || github.event.inputs.input_string }}"
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          INPUT_STRING: ${{ github.event.inputs.input_string }}
+          INPUT_STRING: ${{ github.event_name == 'push' && 'change the max concurrent tasks for any role to be 1 max instead of 2' || github.event.inputs.input_string }}
           NON_INTERACTIVE: true
           AUTH_TOKEN: ${{ secrets.UBIQUITY_OS_CONFIGURATION_PAT }}
