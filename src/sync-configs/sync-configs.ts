@@ -15,6 +15,7 @@ export const REPOS_DIR = "../organizations";
 
 export async function syncConfigsAgent(organizations: string[]) {
   console.log("AUTH_TOKEN length:", process.env.AUTH_TOKEN?.length);
+  console.log("Organizations:", organizations);
 
   for (const org of organizations) {
     console.log(`Processing organization: ${org}`);
@@ -22,10 +23,14 @@ export async function syncConfigsAgent(organizations: string[]) {
     const localPath = path.join(__dirname, "..", "organizations", org);
 
     try {
-      await cloneOrPullRepo(repoUrl, localPath);
+      await cloneOrPullRepo({ url: repoUrl, filePath: "", localDir: org, type: "config" }, "main");
     } catch (error) {
-      console.error(`Failed to process ${org}: ${error.message}`);
-      console.error("Full error object:", JSON.stringify(error, null, 2));
+      if (error instanceof Error) {
+        console.error(`Failed to process ${org}: ${error.message}`);
+        console.error("Full error object:", JSON.stringify(error, null, 2));
+      } else {
+        console.error(`Failed to process ${org}: Unknown error`);
+      }
     }
   }
   // ... rest of the function
@@ -45,7 +50,7 @@ export async function syncConfigsAgent(organizations: string[]) {
 
   const clonePromises = repositories.map(async (repo) => {
     const defaultBranch = await getDefaultBranch(repo.url);
-    return cloneOrPullRepo(repo, defaultBranch, process.env.GITHUB_TOKEN);
+    return cloneOrPullRepo(repo, defaultBranch);
   });
 
   await Promise.all(clonePromises);
