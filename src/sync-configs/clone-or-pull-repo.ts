@@ -1,4 +1,4 @@
-import simpleGit from "simple-git";
+import simpleGit, { SimpleGit } from "simple-git";
 import * as path from "path";
 import fs from "fs";
 import type { Repo } from "./sync-configs";
@@ -13,9 +13,13 @@ import { REPOS_DIR } from "./sync-configs";
 export async function cloneOrPullRepo(repo: Repo, defaultBranch: string): Promise<void> {
   const repoPath = path.join(__dirname, REPOS_DIR, repo.localDir);
   const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error("GITHUB_TOKEN is not set");
+  }
+
   const authenticatedUrl = repo.url.replace("https://", `https://${token}@`);
 
-  const git = simpleGit();
+  const git: SimpleGit = simpleGit();
 
   if (fs.existsSync(repoPath)) {
     try {
@@ -27,7 +31,7 @@ export async function cloneOrPullRepo(repo: Repo, defaultBranch: string): Promis
       console.log(`Successfully updated ${repo.url}`);
     } catch (error) {
       console.error(`Error updating ${repo.url}: ${error.message}`);
-      // Add more detailed error logging here
+      console.error("Full error object:", JSON.stringify(error, null, 2));
       throw error;
     }
   } else {
@@ -37,7 +41,7 @@ export async function cloneOrPullRepo(repo: Repo, defaultBranch: string): Promis
       console.log(`Successfully cloned ${repo.url}`);
     } catch (error) {
       console.error(`Error cloning ${repo.url}: ${error.message}`);
-      // Add more detailed error logging here
+      console.error("Full error object:", JSON.stringify(error, null, 2));
       throw error;
     }
   }

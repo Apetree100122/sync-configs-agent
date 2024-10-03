@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import inquirer from "inquirer";
-import * as path from "path";
+import path from "path";
 import simpleGit, { SimpleGit } from "simple-git";
 import { cloneOrPullRepo } from "./clone-or-pull-repo";
 import { getDefaultBranch } from "./get-default-branch";
@@ -13,7 +13,23 @@ export type Repo = (typeof repositories)[number];
 
 export const REPOS_DIR = "../organizations";
 
-export async function syncConfigsAgent() {
+export async function syncConfigsAgent(organizations: string[]) {
+  console.log("AUTH_TOKEN length:", process.env.AUTH_TOKEN?.length);
+
+  for (const org of organizations) {
+    console.log(`Processing organization: ${org}`);
+    const repoUrl = `https://github.com/${org}/ubiquibot-config.git`;
+    const localPath = path.join(__dirname, "..", "organizations", org);
+
+    try {
+      await cloneOrPullRepo(repoUrl, localPath);
+    } catch (error) {
+      console.error(`Failed to process ${org}: ${error.message}`);
+      console.error("Full error object:", JSON.stringify(error, null, 2));
+    }
+  }
+  // ... rest of the function
+
   const args = process.argv.slice(2);
   const shouldPush = args.includes("--push");
 

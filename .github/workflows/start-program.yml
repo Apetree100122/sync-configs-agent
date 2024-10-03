@@ -62,6 +62,17 @@ jobs:
         if: steps.test_access.outcome == 'success'
         run: npm install
 
+      - name: Verify AUTH_TOKEN
+        run: |
+          if [ ${#AUTH_TOKEN} -eq 0 ]; then
+            echo "AUTH_TOKEN is empty or not set"
+            exit 1
+          else
+            echo "AUTH_TOKEN is set and has length ${#AUTH_TOKEN}"
+          fi
+        env:
+          AUTH_TOKEN: ${{ secrets.UBIQUITY_OS_CONFIGURATION_PAT }}
+
       - name: Run npm start
         if: steps.test_access.outcome == 'success'
         run: npm start "${{ github.event_name == 'push' && 'change the max concurrent tasks for any role to be 1 max instead of 2' || github.event.inputs.input_string }}"
