@@ -16,11 +16,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.UBIQUITY_OS_CONFIGURATION_AGENT_PAT }}
-          persist-credentials: true  # Ensure credentials are persisted for subsequent steps
+          persist-credentials: false  # Do not persist default credentials
 
-      - name: Configure Git to use PAT
+      - name: Set up git authentication
+        env:
+          GITHUB_TOKEN: ${{ secrets.UBIQUITY_OS_CONFIGURATION_AGENT_PAT }}
         run: |
-          git config --global url."https://${{ secrets.UBIQUITY_OS_CONFIGURATION_AGENT_PAT }}:@github.com/".insteadOf "https://github.com/"
+          git config --global credential.helper store
+          echo "https://${{ secrets.UBIQUITY_OS_CONFIGURATION_AGENT_PAT }}:@github.com" > ~/.git-credentials
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,9 +34,9 @@ jobs:
         run: npm install
 
       - name: Run start script
-        run: npm start "${{ github.event.inputs.input_string }}"
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           INPUT_STRING: ${{ github.event.inputs.input_string }}
           NON_INTERACTIVE: "true"
           GITHUB_TOKEN: ${{ secrets.UBIQUITY_OS_CONFIGURATION_AGENT_PAT }}
+        run: npm start "${{ github.event.inputs.input_string }}"
