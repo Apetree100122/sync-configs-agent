@@ -3,9 +3,11 @@ import simpleGit, { SimpleGit } from "simple-git";
 import type { Repo } from "./sync-configs";
 import { REPOS_DIR } from "./sync-configs";
 
-export async function cloneOrPullRepo(repo: Repo, defaultBranch: string): Promise<void> {
+export async function cloneOrPullRepo(repo: Repo, defaultBranch: string, authToken?: string): Promise<void> {
   const repoPath = path.join(__dirname, REPOS_DIR, repo.localDir);
-  const git: SimpleGit = simpleGit(repoPath);
+  const repoUrl = authToken ? repo.url.replace("https://github.com/", `https://${authToken}@github.com/`) : repo.url;
+
+  const git: SimpleGit = simpleGit();
 
   if (await git.checkIsRepo()) {
     console.log(`Updating ${repo.url}...`);
@@ -20,7 +22,7 @@ export async function cloneOrPullRepo(repo: Repo, defaultBranch: string): Promis
   } else {
     console.log(`Cloning ${repo.url}...`);
     try {
-      await git.clone(repo.url, repoPath);
+      await git.clone(repoUrl, repoPath);
     } catch (error) {
       console.error(`Error cloning ${repo.url}:`, error);
       throw error;

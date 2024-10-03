@@ -29,7 +29,7 @@ export async function syncConfigsAgent() {
 
   const clonePromises = repositories.map(async (repo) => {
     const defaultBranch = await getDefaultBranch(repo.url);
-    return cloneOrPullRepo(repo, defaultBranch);
+    return cloneOrPullRepo(repo, defaultBranch, process.env.GITHUB_TOKEN);
   });
 
   await Promise.all(clonePromises);
